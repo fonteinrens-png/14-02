@@ -4,15 +4,15 @@ import time
 # -----------------------------------------------------------------------------
 # 1. CONFIGURATIE & CSS
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="Rens & Rens Quiz", page_icon="❤️", layout="wide")
+st.set_page_config(page_title="Rens & Rens Quiz", page_icon="❤️")
 
 st.markdown("""
     <style>
-    /* Algemene witruimte weghalen */
+    /* Zorg dat de app eruit ziet als een mobiele feed (niet te breed op PC) */
     .block-container {
         padding-top: 2rem !important;
-        padding-bottom: 1rem !important;
-        max-width: 900px; /* Zorgt dat het niet te breed wordt op grote schermen */
+        padding-bottom: 2rem !important;
+        max-width: 700px; /* Mooie breedte voor fotos */
     }
     
     .stApp {
@@ -26,10 +26,11 @@ st.markdown("""
         color: white;
         border-radius: 12px;
         border: none;
-        padding: 10px 20px;
+        padding: 12px 20px;
         font-weight: bold;
         width: 100%;
-        margin-top: 5px;
+        margin-top: 10px;
+        font-size: 16px;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
@@ -50,6 +51,8 @@ st.markdown("""
         text-align: center;
         border: 2px solid #f48fb1;
         border-radius: 10px;
+        padding: 10px;
+        font-size: 16px;
     }
     
     /* Footer weg */
@@ -173,58 +176,49 @@ elif st.session_state.stage == 'quiz':
     
     # Progress bar
     st.progress((st.session_state.q_index) / len(vragen_lijst))
-    
-    # HIER IS DE FIX: 
-    # Kolommen verhouding [2, 3] betekent: Links 40% breedte, Rechts 60% breedte
-    col_img, col_txt = st.columns([2, 3], gap="large")
-    
-    with col_img:
-        # HIER IS DE GROTE FIX: width=350 zorgt dat de foto nooit groter wordt dan dat.
-        try:
-            st.image(q_data['foto'], width=350) 
-        except:
-            st.error(f"Foto '{q_data['foto']}' mist.")
+    st.write("") # Klein beetje witruimte
 
-    with col_txt:
-        # Wat extra witruimte boven de tekst zodat het mooi uitlijnt met de foto
-        st.markdown("### ") 
-        st.markdown(f"#### Vraag {st.session_state.q_index + 1}")
-        st.markdown(f"**{q_data['vraag']}**")
-        
-        st.markdown("<br>", unsafe_allow_html=True) # Witruimte voor knoppen
-        
-        if "keuzes" in q_data:
-            for keuze in q_data['keuzes']:
-                if st.button(keuze):
-                    check_answer(keuze)
-        else:
-            with st.form(key=f"form_{st.session_state.q_index}", clear_on_submit=True):
-                user_text = st.text_input("Antwoord:", key="input_text")
-                if st.form_submit_button("Controleer"):
-                    check_answer(user_text)
+    # 1. FOTO BOVENAAN (Volledige breedte, geen limiet)
+    try:
+        st.image(q_data['foto'], use_container_width=True) 
+    except:
+        st.error(f"Foto '{q_data['foto']}' mist.")
+
+    # 2. TEKST ERONDER
+    st.markdown(f"### Vraag {st.session_state.q_index + 1}")
+    st.markdown(f"**{q_data['vraag']}**")
+    
+    st.markdown("<br>", unsafe_allow_html=True) 
+    
+    if "keuzes" in q_data:
+        for keuze in q_data['keuzes']:
+            if st.button(keuze):
+                check_answer(keuze)
+    else:
+        with st.form(key=f"form_{st.session_state.q_index}", clear_on_submit=True):
+            user_text = st.text_input("Antwoord:", key="input_text")
+            if st.form_submit_button("Controleer"):
+                check_answer(user_text)
 
 # --- EIND SCHERM ---
 elif st.session_state.stage == 'end':
     st.balloons()
     st.title("Gewonnen! 💖")
     
-    c1, c2 = st.columns([1, 1])
+    st.markdown("### Je bent de allerleukste!")
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=120)
     
-    with c1:
-        st.markdown("### Je bent de allerleukste!")
-        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=120)
-        
-        st.success("### 🎁 Je Cadeau:\n\n🥂 **Romantisch diner voor twee!**\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
+    st.success("### 🎁 Je Cadeau:\n\n🥂 **Romantisch diner voor twee!**\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
 
-    with c2:
-        st.write("**Memory Lane:**")
-        
-        # Grid van 2x5
-        grid_col1, grid_col2 = st.columns(2)
-        for i in range(10):
-            target_col = grid_col1 if i < 5 else grid_col2
-            with target_col:
-                try:
-                    st.image(f"foto{i+1}.jpeg", use_container_width=True)
-                except:
-                    pass
+    st.markdown("---")
+    st.write("**Memory Lane:**")
+    
+    # Grid van 2x5
+    grid_col1, grid_col2 = st.columns(2)
+    for i in range(10):
+        target_col = grid_col1 if i < 5 else grid_col2
+        with target_col:
+            try:
+                st.image(f"foto{i+1}.jpeg", use_container_width=True)
+            except:
+                pass
