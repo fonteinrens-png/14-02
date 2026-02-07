@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onze Rens&Rens valentijnsquiz ❤️</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            background-color: #fce4ec;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #880e4f;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        h2 { margin-top: 0; color: #d81b60; }
+
+        .quiz-img {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 3px solid #f8bbd0;
+            object-fit: contain;
+        }
+
+        /* Input veld stijl */
+        input[type="text"] {
+            padding: 12px;
+            border: 2px solid #f48fb1;
+            border-radius: 8px;
+            width: 70%;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: #d81b60; }
+
+        /* Knoppen algemeen */
+        .btn {
+            margin-top: 15px;
+            padding: 12px 30px;
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn:hover { background-color: #c2185b; transform: scale(1.05); }
+
+        /* Meerkeuze knoppen */
+        .mc-btn {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #fff0f6;
+            border: 2px solid #f48fb1;
+            color: #880e4f;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .mc-btn:hover {
+            background-color: #e91e63;
+            color: white;
+            border-color: #e91e63;
+        }
+
+        /* Progress balk */
+        .progress-bar {
+            width: 100%;
+            background-color: #fce4ec;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #e91e63;
+            width: 0%; 
+            transition: width 0.5s ease;
+        }
+
+        /* Collage voor het einde */
+        .collage {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 op een rij */
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .collage img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Schermen verbergen/tonen */
+        #start-screen, #quiz-screen, #end-screen { display: none; animation: fadeIn 0.5s; }
+        .active { display: block !important; }
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .shake { animation: shake 0.4s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="start-screen" class="active">
+            <h1>Valentijns Quiz 💌</h1>
+            <p>Ik heb 10 vragen over ons voorbereid in aanloop naar valentijnsdag.</p>
+            <p>Weet jij alles nog?</p>
+            <p>Ik hoop het want er staat veel op het spel...</p>
+            <button class="btn" onclick="startQuiz()">Start de Quiz</button>
+        </div>
+
+        <div id="quiz-screen">
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+            <h2 id="question-title">Vraag 1</h2>
+            
+            <img src="" id="quiz-image" class="quiz-img" alt="Quiz foto">
+            <p id="question-text" style="font-weight: bold; font-size: 1.1em;"></p>
+            
+            <div id="input-container">
+                <input type="text" id="user-answer" placeholder="Jouw antwoord..." autocomplete="off">
+                <br>
+                <button class="btn" onclick="checkTextAnswer()">Controleer</button>
+            </div>
+
+            <div id="mc-container" class="hidden">
+                </div>
+        </div>
+
+        <div id="end-screen">
+            <h1>Lekker gewerkt! 💖</h1>
+            <p>Je bent de allerleukste!</p>
+            
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png" 
+                 alt="Harten 10" 
+                 style="width: 100px; display: block; margin: 10px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 8px;">
+    
+
+            <p><strong>Je Cadeau:</strong></p>
+            <p style="font-size: 1.2em; color: #d81b60;">Een romantisch diner voor twee! 🥂</p>
+            <p style="font-size: 1.2em; color: #d81b60;">13-02 - 18:00 - Oudegracht aan de Werf 159k</p>
+        </div>
+
+    </div>
+
+    <script>
+        // ======================================================
+        // 👇 DE VRAGENLIJST (10 stuks) 👇
+        // ======================================================
+        
+        const vragenLijst = [
+            {
+                foto: "foto1.jpeg", 
+                vraag: "Wat is Rens💪 zijn favoriete broodje van Nonna?", 
+                keuzes: ["SALAME FINOCCHIONA", "SALAME TOSCANE", "COPPA DI PARMA", "Broodje duivenstront"],
+                antwoord: "COPPA DI PARMA"
+            },
+            {
+                foto: "foto2.jpeg", 
+                vraag: "Hoeveel mensen waren er op dit feest?", 
+                keuzes: ["<20", "20-50", "weet ik veel - te weinig"],
+                antwoord: "weet ik veel - te weinig"
+            },
+            {
+                foto: "foto3.jpeg", 
+                vraag: "Hoeveel slokken nam Renske van dit drankje?", 
+                keuzes: ["ze vond het heerlijk en dronk het helemaal op", "ze vond het smerig nam 1 slok en gaf Rens💪 de rest"],
+                antwoord: "ze vond het smerig nam 1 slok en gaf Rens💪 de rest"
+            },
+            {
+                foto: "foto4.jpeg", 
+                vraag: "Hoevaak heeft RensKE gewonnen van Rens💪 met keer op keer?", 
+                keuzes: ["Een paar keer", "Altijd!", "nog nooit"],
+                antwoord: "nog nooit"
+            },
+            {
+                foto: "foto5.jpeg", 
+                vraag: "Wat was de leukste date?", 
+                keuzes: ["Doolhof", "Kaarslicht", "Schilderen", "Allemaal"],
+                antwoord: "allemaal"
+            },
+            // VRAAG 6 t/m 10
+            {
+                foto: "foto6.jpeg",
+                vraag: "Wat kreeg Renske na het bezoek aan de vlindertuin?",
+                keuzes: ["Vlinders in haar buik", "Rode wangen van het blozen", "Een les over kruisbestuiving"],
+                antwoord: "Vlinders in haar buik"
+            },
+            {
+                foto: "foto7.jpeg",
+                vraag: "Wat is Rens💪 zijn favoriete Calzone?",
+                keuzes: ["Die van RensKE", "Normale", "Pollo"],
+                antwoord: "Normale"
+            },
+            {
+                foto: "foto8.jpeg",
+                vraag: "Wat is de mooiste stad van Nederland?",
+                keuzes: ["Roffa", "Utje", "Gouda", "Duiven"],
+                antwoord: "Utje"
+            },
+            {
+                foto: "foto9.jpeg",
+                vraag: "Waarom trekt RensKE haren uit Rens💪 zijn hoofd?",
+                keuzes: ["Dat vindt Rens💪 fijn", "RensKE doet aan sadisme"],
+                antwoord: "RensKE doet aan sadisme"
+            },
+            {
+                foto: "foto10.jpeg",
+                vraag: "Wie is de leukste?",
+                antwoord: "rens"
+            }
+        ];
+
+        // ======================================================
+        // 👆 LOGICA (NIET AANPASSEN) 👆
+        // ======================================================
+
+        let index = 0;
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('quiz-screen').classList.add('active');
+            laadVraag();
+        }
+
+        function laadVraag() {
+            const data = vragenLijst[index];
+            
+            // 1. Vul teksten en foto
+            document.getElementById('question-title').innerText = `Vraag ${index + 1} van ${vragenLijst.length}`;
+            document.getElementById('question-text').innerText = data.vraag;
+            document.getElementById('quiz-image').src = data.foto;
+            
+            // 2. Update progress balk
+            document.getElementById('progress').style.width = ((index / vragenLijst.length) * 100) + "%";
+
+            // 3. Check: Is dit Meerkeuze of Open vraag?
+            const inputContainer = document.getElementById('input-container');
+            const mcContainer = document.getElementById('mc-container');
+
+            if (data.keuzes) {
+                // MEERKEUZE
+                inputContainer.classList.add('hidden');
+                mcContainer.classList.remove('hidden');
+                mcContainer.innerHTML = ""; // Oude knoppen weg
+
+                // Maak nieuwe knoppen
+                data.keuzes.forEach(keuze => {
+                    const btn = document.createElement('button');
+                    btn.innerText = keuze;
+                    btn.className = 'mc-btn';
+                    btn.onclick = () => verwerkAntwoord(keuze); // Direct antwoord sturen
+                    mcContainer.appendChild(btn);
+                });
+
+            } else {
+                // OPEN VRAAG
+                inputContainer.classList.remove('hidden');
+                mcContainer.classList.add('hidden');
+                document.getElementById('user-answer').value = "";
+                document.getElementById('user-answer').focus();
+            }
+        }
+
+        // Functie voor Open Vragen (Text input)
+        function checkTextAnswer() {
+            const invoer = document.getElementById('user-answer').value.trim();
+            verwerkAntwoord(invoer);
+        }
+
+        // De algemene controle functie
+        function verwerkAntwoord(invoer) {
+            const data = vragenLijst[index];
+            let isGoed = false;
+
+            // Vergelijk antwoorden (hoofdletterongevoelig)
+            if (invoer.toLowerCase() === data.antwoord.toLowerCase()) {
+                isGoed = true;
+            }
+
+            if (isGoed) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                index++;
+                if (index < vragenLijst.length) {
+                    setTimeout(laadVraag, 800);
+                } else {
+                    document.getElementById('progress').style.width = "100%";
+                    setTimeout(toonEinde, 800);
+                }
+            } else {
+                schudScherm();
+                alert("Helaas, niet goed! Probeer het nog eens ❤️");
+            }
+        }
+
+        function schudScherm() {
+            const c = document.querySelector('.container');
+            c.classList.add('shake');
+            setTimeout(() => c.classList.remove('shake'), 500);
+        }
+
+        function toonEinde() {
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('end-screen').classList.add('active');
+            confetti({ particleCount: 300, spread: 150 });
+        }
+
+        // Enter toets ondersteuning
+        document.getElementById("user-answer").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") checkTextAnswer();
+        });
+    </script>
+</body>
+</html>
