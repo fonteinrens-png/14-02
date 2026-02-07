@@ -2,46 +2,65 @@ import streamlit as st
 import time
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURATIE & CSS (Voor de roze stijl)
+# 1. CONFIGURATIE & CSS (Compacte weergave)
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="Rens & Rens Valentijnsquiz", page_icon="❤️")
+st.set_page_config(page_title="Rens & Rens Quiz", page_icon="❤️", layout="wide")
 
-# We injecteren wat CSS om de achtergrond roze te maken en knoppen te stylen
 st.markdown("""
     <style>
+    /* 1. Verwijder de standaard enorme witruimte van Streamlit */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100%;
+    }
+    
+    /* 2. Achtergrondkleur */
     .stApp {
         background-color: #fce4ec;
         color: #880e4f;
     }
-    /* Stijl voor de titel */
-    h1 {
-        color: #d81b60;
-        text-align: center;
-    }
-    /* Stijl voor normale tekst */
-    p {
-        font-size: 1.1rem;
-    }
-    /* Custom button styling om ze roze te maken */
+
+    /* 3. Knoppen styling */
     div.stButton > button {
         background-color: #e91e63;
         color: white;
-        border-radius: 20px;
+        border-radius: 15px;
         border: none;
-        padding: 10px 24px;
+        padding: 8px 16px;
         font-weight: bold;
         width: 100%;
+        margin-top: 5px;
     }
     div.stButton > button:hover {
         background-color: #c2185b;
         color: white;
         border-color: #c2185b;
     }
-    /* Input velden centreren */
+
+    /* 4. Titel styling compact maken */
+    h1 {
+        color: #d81b60;
+        text-align: center;
+        margin-bottom: 0px;
+        font-size: 2rem;
+        padding: 0;
+    }
+    h3 {
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    /* 5. Input veld centreren */
     .stTextInput > div > div > input {
         text-align: center;
         border: 2px solid #f48fb1;
     }
+    
+    /* 6. Footer verbergen */
+    footer {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -106,38 +125,36 @@ vragen_lijst = [
     {
         "foto": "foto10.jpeg",
         "vraag": "Wie is de leukste?",
-        "antwoord": "rens" # Geen keuzes, dus open vraag
+        "antwoord": "rens" 
     }
 ]
 
 # -----------------------------------------------------------------------------
-# 3. SESSIE STATUS (Geheugen van de app)
+# 3. SESSIE STATUS
 # -----------------------------------------------------------------------------
 if 'stage' not in st.session_state:
-    st.session_state.stage = 'start' # Opties: 'start', 'quiz', 'end'
+    st.session_state.stage = 'start'
 if 'q_index' not in st.session_state:
     st.session_state.q_index = 0
 
 # -----------------------------------------------------------------------------
-# 4. FUNCTIES
+# 4. LOGICA
 # -----------------------------------------------------------------------------
 def check_answer(user_input):
     current_q = vragen_lijst[st.session_state.q_index]
     
-    # Check antwoord (hoofdletterongevoelig)
     if user_input.strip().lower() == current_q['antwoord'].lower():
-        st.success("Goedzo! 🎉")
-        time.sleep(1) # Korte pauze voor effect
+        st.toast("Goedzo! 🎉", icon="✅") # Toast is subtieler dan success bericht
+        time.sleep(0.5)
         
-        # Volgende vraag of einde
         if st.session_state.q_index < len(vragen_lijst) - 1:
             st.session_state.q_index += 1
-            st.rerun() # Herlaad de pagina voor de volgende vraag
+            st.rerun()
         else:
             st.session_state.stage = 'end'
             st.rerun()
     else:
-        st.error("Helaas, niet goed! Probeer het nog eens ❤️")
+        st.toast("Helaas, fout! ❤️", icon="❌")
 
 # -----------------------------------------------------------------------------
 # 5. UI OPBOUW
@@ -145,16 +162,13 @@ def check_answer(user_input):
 
 # --- START SCHERM ---
 if st.session_state.stage == 'start':
+    st.markdown("<br><br>", unsafe_allow_html=True) # Beetje witruimte om te centreren
     st.title("Valentijns Quiz 💌")
-    st.write("Ik heb 10 vragen over ons voorbereid in aanloop naar valentijnsdag.")
-    st.write("Weet jij alles nog?")
-    st.write("**Ik hoop het want er staat veel op het spel...**")
-    
-    st.markdown("---")
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        if st.button("Start de Quiz"):
+        st.write("10 vragen over ons. Weet jij alles nog?")
+        st.write("**Er staat veel op het spel...**")
+        if st.button("Start de Quiz", use_container_width=True):
             st.session_state.stage = 'quiz'
             st.rerun()
 
@@ -162,62 +176,58 @@ if st.session_state.stage == 'start':
 elif st.session_state.stage == 'quiz':
     q_data = vragen_lijst[st.session_state.q_index]
     
-    # Progress bar
-    progress = (st.session_state.q_index) / len(vragen_lijst)
-    st.progress(progress)
+    # Progress bar heel dun bovenaan
+    st.progress((st.session_state.q_index) / len(vragen_lijst))
     
-    st.markdown(f"### Vraag {st.session_state.q_index + 1}")
+    # Twee kolommen: Links Foto, Rechts Vraag
+    col_img, col_txt = st.columns([1, 1], gap="medium")
     
-    # Toon foto (met error handling als lokaal bestand mist)
-    try:
-        st.image(q_data['foto'], use_container_width=True)
-    except:
-        st.warning(f"Kan afbeelding '{q_data['foto']}' niet vinden. Zorg dat deze in de map staat.")
+    with col_img:
+        # Foto tonen met vaste hoogte zodat pagina niet verspringt
+        try:
+            # We gebruiken HTML om de hoogte te forceren (max 60% van schermhoogte)
+            st.image(q_data['foto'], use_container_width=True)
+        except:
+            st.error("Foto mist.")
 
-    st.markdown(f"**{q_data['vraag']}**")
-    
-    # Check of het meerkeuze is of open vraag
-    if "keuzes" in q_data:
-        # MEERKEUZE: We gebruiken knoppen voor een app-gevoel
-        for keuze in q_data['keuzes']:
-            if st.button(keuze):
-                check_answer(keuze)
-    else:
-        # OPEN VRAAG
-        # We gebruiken een formulier zodat enter werkt en input leegt bij refresh
-        with st.form(key=f"form_{st.session_state.q_index}"):
-            user_text = st.text_input("Jouw antwoord...", key="input_text")
-            submit_btn = st.form_submit_button("Controleer")
-            
-            if submit_btn:
-                check_answer(user_text)
+    with col_txt:
+        # Vraag en knoppen
+        st.markdown(f"### Vraag {st.session_state.q_index + 1}")
+        st.markdown(f"**{q_data['vraag']}**")
+        
+        if "keuzes" in q_data:
+            for keuze in q_data['keuzes']:
+                if st.button(keuze):
+                    check_answer(keuze)
+        else:
+            with st.form(key=f"form_{st.session_state.q_index}", clear_on_submit=True):
+                user_text = st.text_input("Antwoord:", key="input_text")
+                if st.form_submit_button("Controleer"):
+                    check_answer(user_text)
 
 # --- EIND SCHERM ---
 elif st.session_state.stage == 'end':
-    st.balloons() # Confetti effect!
-    st.title("Lekker gewerkt! 💖")
-    st.write("Je bent de allerleukste!")
+    st.balloons()
+    st.title("Gewonnen! 💖")
     
-    # Harten 10
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=150)
+    c1, c2 = st.columns([1, 1])
     
-    st.markdown("---")
-    st.subheader("📸 Memory Lane")
-    
-    # Collage maken (4 kolommen breed)
-    cols = st.columns(4)
-    for i in range(10):
-        with cols[i % 4]: # Verdeel over de 4 kolommen
-            try:
-                st.image(f"foto{i+1}.jpeg", use_container_width=True)
-            except:
-                pass # Sla over als foto mist
+    with c1:
+        st.write("Je bent de allerleukste!")
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=100)
+        st.markdown("### 🎁 Je Cadeau:")
+        st.success("🥂 Romantisch diner voor twee!\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
 
-    st.markdown("---")
-    
-    # GIFJE
-    st.markdown('<img src="https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif" style="width:100%; border-radius:10px;">', unsafe_allow_html=True)
-    
-    st.markdown("### 🎁 Je Cadeau:")
-    st.markdown("### 🥂 Een romantisch diner voor twee!")
-    st.info("📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
+    with c2:
+        # Collage compact houden
+        st.write("**Memory Lane:**")
+        
+        # Grid van 2x5 voor compactheid
+        grid_col1, grid_col2 = st.columns(2)
+        for i in range(10):
+            target_col = grid_col1 if i < 5 else grid_col2
+            with target_col:
+                try:
+                    st.image(f"foto{i+1}.jpeg", use_container_width=True)
+                except:
+                    pass
