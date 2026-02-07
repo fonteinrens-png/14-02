@@ -2,64 +2,57 @@ import streamlit as st
 import time
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURATIE & CSS (Compacte weergave)
+# 1. CONFIGURATIE & CSS
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Rens & Rens Quiz", page_icon="❤️", layout="wide")
 
 st.markdown("""
     <style>
-    /* 1. Verwijder de standaard enorme witruimte van Streamlit */
+    /* Algemene witruimte weghalen */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 1rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-        max-width: 100%;
+        max-width: 900px; /* Zorgt dat het niet te breed wordt op grote schermen */
     }
     
-    /* 2. Achtergrondkleur */
     .stApp {
         background-color: #fce4ec;
         color: #880e4f;
     }
 
-    /* 3. Knoppen styling */
+    /* Knoppen styling */
     div.stButton > button {
         background-color: #e91e63;
         color: white;
-        border-radius: 15px;
+        border-radius: 12px;
         border: none;
-        padding: 8px 16px;
+        padding: 10px 20px;
         font-weight: bold;
         width: 100%;
         margin-top: 5px;
+        transition: all 0.2s;
     }
     div.stButton > button:hover {
         background-color: #c2185b;
-        color: white;
-        border-color: #c2185b;
+        transform: scale(1.02);
     }
 
-    /* 4. Titel styling compact maken */
+    /* Titel styling */
     h1 {
         color: #d81b60;
         text-align: center;
-        margin-bottom: 0px;
-        font-size: 2rem;
-        padding: 0;
+        font-size: 2.2rem;
+        margin-bottom: 10px;
     }
-    h3 {
-        margin-top: 0;
-        padding-top: 0;
-    }
-
-    /* 5. Input veld centreren */
+    
+    /* Input velden centreren */
     .stTextInput > div > div > input {
         text-align: center;
         border: 2px solid #f48fb1;
+        border-radius: 10px;
     }
     
-    /* 6. Footer verbergen */
+    /* Footer weg */
     footer {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
@@ -144,7 +137,7 @@ def check_answer(user_input):
     current_q = vragen_lijst[st.session_state.q_index]
     
     if user_input.strip().lower() == current_q['antwoord'].lower():
-        st.toast("Goedzo! 🎉", icon="✅") # Toast is subtieler dan success bericht
+        st.toast("Goedzo! 🎉", icon="✅")
         time.sleep(0.5)
         
         if st.session_state.q_index < len(vragen_lijst) - 1:
@@ -162,12 +155,14 @@ def check_answer(user_input):
 
 # --- START SCHERM ---
 if st.session_state.stage == 'start':
-    st.markdown("<br><br>", unsafe_allow_html=True) # Beetje witruimte om te centreren
+    st.markdown("<br>", unsafe_allow_html=True)
     st.title("Valentijns Quiz 💌")
+    
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.write("10 vragen over ons. Weet jij alles nog?")
         st.write("**Er staat veel op het spel...**")
+        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Start de Quiz", use_container_width=True):
             st.session_state.stage = 'quiz'
             st.rerun()
@@ -176,24 +171,27 @@ if st.session_state.stage == 'start':
 elif st.session_state.stage == 'quiz':
     q_data = vragen_lijst[st.session_state.q_index]
     
-    # Progress bar heel dun bovenaan
+    # Progress bar
     st.progress((st.session_state.q_index) / len(vragen_lijst))
     
-    # Twee kolommen: Links Foto, Rechts Vraag
-    col_img, col_txt = st.columns([1, 1], gap="medium")
+    # HIER IS DE FIX: 
+    # Kolommen verhouding [2, 3] betekent: Links 40% breedte, Rechts 60% breedte
+    col_img, col_txt = st.columns([2, 3], gap="large")
     
     with col_img:
-        # Foto tonen met vaste hoogte zodat pagina niet verspringt
+        # HIER IS DE GROTE FIX: width=350 zorgt dat de foto nooit groter wordt dan dat.
         try:
-            # We gebruiken HTML om de hoogte te forceren (max 60% van schermhoogte)
-            st.image(q_data['foto'], use_container_width=True)
+            st.image(q_data['foto'], width=350) 
         except:
-            st.error("Foto mist.")
+            st.error(f"Foto '{q_data['foto']}' mist.")
 
     with col_txt:
-        # Vraag en knoppen
-        st.markdown(f"### Vraag {st.session_state.q_index + 1}")
+        # Wat extra witruimte boven de tekst zodat het mooi uitlijnt met de foto
+        st.markdown("### ") 
+        st.markdown(f"#### Vraag {st.session_state.q_index + 1}")
         st.markdown(f"**{q_data['vraag']}**")
+        
+        st.markdown("<br>", unsafe_allow_html=True) # Witruimte voor knoppen
         
         if "keuzes" in q_data:
             for keuze in q_data['keuzes']:
@@ -213,16 +211,15 @@ elif st.session_state.stage == 'end':
     c1, c2 = st.columns([1, 1])
     
     with c1:
-        st.write("Je bent de allerleukste!")
-        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=100)
-        st.markdown("### 🎁 Je Cadeau:")
-        st.success("🥂 Romantisch diner voor twee!\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
+        st.markdown("### Je bent de allerleukste!")
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=120)
+        
+        st.success("### 🎁 Je Cadeau:\n\n🥂 **Romantisch diner voor twee!**\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
 
     with c2:
-        # Collage compact houden
         st.write("**Memory Lane:**")
         
-        # Grid van 2x5 voor compactheid
+        # Grid van 2x5
         grid_col1, grid_col2 = st.columns(2)
         for i in range(10):
             target_col = grid_col1 if i < 5 else grid_col2
