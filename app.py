@@ -1,5 +1,7 @@
 import streamlit as st
 import time
+import base64
+import os
 
 # -----------------------------------------------------------------------------
 # 1. CONFIGURATIE & CSS
@@ -8,11 +10,11 @@ st.set_page_config(page_title="Rens & Rens Quiz", page_icon="❤️")
 
 st.markdown("""
     <style>
-    /* Zorg dat de app eruit ziet als een mobiele feed (niet te breed op PC) */
+    /* Maak de app compact */
     .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 700px; /* Mooie breedte voor fotos */
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        max-width: 600px;
     }
     
     .stApp {
@@ -20,30 +22,31 @@ st.markdown("""
         color: #880e4f;
     }
 
-    /* Knoppen styling */
+    /* Knoppen styling - Compact en duidelijk */
     div.stButton > button {
         background-color: #e91e63;
         color: white;
         border-radius: 12px;
         border: none;
-        padding: 12px 20px;
+        padding: 8px 10px; /* Iets minder padding */
         font-weight: bold;
         width: 100%;
-        margin-top: 10px;
-        font-size: 16px;
+        margin-top: 5px;
+        font-size: 14px;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
         background-color: #c2185b;
-        transform: scale(1.02);
+        transform: scale(1.01);
     }
 
     /* Titel styling */
     h1 {
         color: #d81b60;
         text-align: center;
-        font-size: 2.2rem;
-        margin-bottom: 10px;
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+        margin-top: 0;
     }
     
     /* Input velden centreren */
@@ -51,17 +54,28 @@ st.markdown("""
         text-align: center;
         border: 2px solid #f48fb1;
         border-radius: 10px;
-        padding: 10px;
-        font-size: 16px;
+        padding: 8px;
     }
     
     /* Footer weg */
     footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 2. DE VRAGENLIJST
+# 2. HULPFUNCTIE: FOTO LADEN
+# -----------------------------------------------------------------------------
+def get_img_as_base64(file_path):
+    """Zet afbeelding om naar base64 string voor HTML weergave"""
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# -----------------------------------------------------------------------------
+# 3. DE VRAGENLIJST
 # -----------------------------------------------------------------------------
 vragen_lijst = [
     {
@@ -126,7 +140,7 @@ vragen_lijst = [
 ]
 
 # -----------------------------------------------------------------------------
-# 3. SESSIE STATUS
+# 4. SESSIE STATUS
 # -----------------------------------------------------------------------------
 if 'stage' not in st.session_state:
     st.session_state.stage = 'start'
@@ -134,7 +148,7 @@ if 'q_index' not in st.session_state:
     st.session_state.q_index = 0
 
 # -----------------------------------------------------------------------------
-# 4. LOGICA
+# 5. LOGICA
 # -----------------------------------------------------------------------------
 def check_answer(user_input):
     current_q = vragen_lijst[st.session_state.q_index]
@@ -153,7 +167,7 @@ def check_answer(user_input):
         st.toast("Helaas, fout! ❤️", icon="❌")
 
 # -----------------------------------------------------------------------------
-# 5. UI OPBOUW
+# 6. UI OPBOUW
 # -----------------------------------------------------------------------------
 
 # --- START SCHERM ---
@@ -174,21 +188,27 @@ if st.session_state.stage == 'start':
 elif st.session_state.stage == 'quiz':
     q_data = vragen_lijst[st.session_state.q_index]
     
-    # Progress bar
+    # Progress bar (klein)
     st.progress((st.session_state.q_index) / len(vragen_lijst))
-    st.write("") # Klein beetje witruimte
-
-    # 1. FOTO BOVENAAN (Volledige breedte, geen limiet)
-    try:
-        st.image(q_data['foto'], use_container_width=True) 
-    except:
-        st.error(f"Foto '{q_data['foto']}' mist.")
-
-    # 2. TEKST ERONDER
-    st.markdown(f"### Vraag {st.session_state.q_index + 1}")
-    st.markdown(f"**{q_data['vraag']}**")
     
-    st.markdown("<br>", unsafe_allow_html=True) 
+    # 1. FOTO MET HTML (De truc voor perfecte hoogte zonder scrollen)
+    # We zetten max-height op 45vh (45% van schermhoogte)
+    img_b64 = get_img_as_base64(q_data['foto'])
+    
+    if img_b64:
+        st.markdown(
+            f'<div style="display: flex; justify-content: center;">'
+            f'<img src="data:image/jpeg;base64,{img_b64}" '
+            f'style="max-height: 40vh; max-width: 100%; object-fit: contain; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.error(f"Foto '{q_data['foto']}' niet gevonden.")
+
+    # 2. VRAAG & KNOPPEN
+    st.markdown(f"<h3 style='text-align: center; margin-bottom: 5px; font-size: 1.2rem;'>Vraag {st.session_state.q_index + 1}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; font-weight: bold; margin-bottom: 10px;'>{q_data['vraag']}</p>", unsafe_allow_html=True)
     
     if "keuzes" in q_data:
         for keuze in q_data['keuzes']:
@@ -196,7 +216,7 @@ elif st.session_state.stage == 'quiz':
                 check_answer(keuze)
     else:
         with st.form(key=f"form_{st.session_state.q_index}", clear_on_submit=True):
-            user_text = st.text_input("Antwoord:", key="input_text")
+            user_text = st.text_input("Antwoord:", key="input_text", label_visibility="collapsed", placeholder="Typ je antwoord...")
             if st.form_submit_button("Controleer"):
                 check_answer(user_text)
 
@@ -205,15 +225,22 @@ elif st.session_state.stage == 'end':
     st.balloons()
     st.title("Gewonnen! 💖")
     
-    st.markdown("### Je bent de allerleukste!")
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png", width=120)
+    st.markdown("<p style='text-align: center;'>Je bent de allerleukste!</p>", unsafe_allow_html=True)
+    
+    # Harten 10
+    st.markdown(
+        '<div style="display: flex; justify-content: center; margin-bottom: 15px;">'
+        '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/English_pattern_10_of_hearts.svg/200px-English_pattern_10_of_hearts.svg.png" width="100">'
+        '</div>', 
+        unsafe_allow_html=True
+    )
     
     st.success("### 🎁 Je Cadeau:\n\n🥂 **Romantisch diner voor twee!**\n\n📅 13-02 - 18:00\n\n📍 Oudegracht aan de Werf 159k")
 
     st.markdown("---")
     st.write("**Memory Lane:**")
     
-    # Grid van 2x5
+    # Collage
     grid_col1, grid_col2 = st.columns(2)
     for i in range(10):
         target_col = grid_col1 if i < 5 else grid_col2
